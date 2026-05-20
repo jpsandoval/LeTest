@@ -1,0 +1,3 @@
+initialization
+classPromptTemplate
+	^ 'Generate unit tests in Pharo for $NAME to achieve 100% line coverage for this class.\nDont use setUp and tearDown methods.\nMake tests as atomic as possible.\nAll tests should be for SUnit.\nIn case of mocking, use SUnit-MockObjects. But, do not use mocking for all tests.\nName all methods according to the template - [MethodUnderTest][Scenario]Test, and use only English letters.\nThe source code of class under test is as follows:\n$CODE\n$METHODS\n$POLYMORPHISM\n$TEST_SAMPLE'

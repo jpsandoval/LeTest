@@ -1,0 +1,3 @@
+initialization
+methodDefinitionsKeyword
+   ^ '$METHODS'

@@ -1,0 +1,16 @@
+{
+	"commentStamp" : "",
+	"super" : "Object",
+	"category" : "LeTest-Core",
+	"classinstvars" : [ ],
+	"pools" : [ ],
+	"classvars" : [ ],
+	"instvars" : [
+		"values",
+		"targetClass",
+		"relatedClasses",
+		"maxRelatedClasses"
+	],
+	"name" : "LePromptBuilder",
+	"type" : "normal"
+}

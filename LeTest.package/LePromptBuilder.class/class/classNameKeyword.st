@@ -1,0 +1,3 @@
+initialization
+classNameKeyword
+   ^ '$NAME'

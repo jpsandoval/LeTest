@@ -1,0 +1,3 @@
+accessing
+methodDefinitionsKeyword
+	^self class methodDefinitionsKeyword
