@@ -19,7 +19,21 @@ LePromptBuilder class >> classNameKeyword [
 
 { #category : 'initialization' }
 LePromptBuilder class >> classPromptTemplate [
-	^ 'Generate unit tests in Pharo for $NAME to achieve 100% line coverage for this class.\nDont use setUp and tearDown methods.\nMake tests as atomic as possible.\nAll tests should be for SUnit.\nIn case of mocking, use SUnit-MockObjects. But, do not use mocking for all tests.\nName all methods according to the template - [MethodUnderTest][Scenario]Test, and use only English letters.\nThe source code of class under test is as follows:\n$CODE\n$METHODS\n$POLYMORPHISM\n$TEST_SAMPLE'
+
+	^ 'Generate unit tests in Pharo for $NAME to achieve 100% line coverage for this class.
+Do not use setUp and tearDown methods.
+Make tests as atomic as possible.
+All tests should be for SUnit.
+In case of mocking, use SUnit-MockObjects. But, do not use mocking for all tests.
+Name all methods according to the template - [MethodUnderTest][Scenario]Test, and use only English letters.
+The source code of class under test is as follows:
+$CODE
+$METHODS
+$POLYMORPHISM
+The test class must be named LLMGenerated$NAMETest.
+The output must be a valid Pharo chunk file (.st) ready to be loaded with fileIn.
+Below is an example of the expected output format:
+$TEST_SAMPLE'
 ]
 
 { #category : 'initialization' }
@@ -60,20 +74,15 @@ LePromptBuilder >> buildCodeUnderTest [
 			                       stream cr.
 			                       targetClass fillSourceCodeOn: stream.
 			                       stream cr.
-
 			                       targetClass allSuperclassesDo: [ :cls |
 					                       cls package = targetClass package ifTrue: [
 							                       stream
-								                       nextPutAll: targetClass className;
-								                       nextPutAll: 'extends ';
-								                       nextPutAll: cls className;
-								                       nextPutAll: '. The source code of ';
-								                       nextPutAll: cls className;
-								                       nextPutAll: 'is';
+								                       nextPutAll: 'The superclass ';
+								                       nextPutAll: cls name;
+								                       nextPutAll: ' has the following source code:';
 								                       cr.
-
-							                       cls fillSourceCodeOn: stream ] ] ].
-
+							                       cls fillSourceCodeOn: stream.
+							                       stream cr ] ] ].
 	self put: codeUnderTestString at: self codeUnderTestKeyword
 ]
 
@@ -85,81 +94,85 @@ LePromptBuilder >> buildFor: aClass [
 	self buildCodeUnderTest.
 	self buildMethodSignatures.
 	self buildPolymorphismRelations.
-	self buildSampleTest.
-	self buildSampleTest.
+	self buildSampleTest
 ]
 
 { #category : 'actions' }
 LePromptBuilder >> buildMethodSignatures [
 
-	| relatedClasses signaturesCode|
+	| relatedClasses signaturesCode |
 	relatedClasses := self topRelatedClassesFromArguments.
 	signaturesCode := String streamContents: [ :stream |
-			relatedClasses isNotEmpty ifTrue:[
-				stream nextPutAll:'Here are some information about other methods and classes used by the class under test. Only use them for creating objects, not your own ideas.';cr.
-				relatedClasses do:[ :cls|
-						stream nextPutAll:'=== methods in'; nextPutAll: cls className;cr.
-						cls methods do:[ :m |
-						     	stream nextPutAll: cls className; nextPutAll: '>>'; nextPutAll: m ast selectorAndArgumentNames; cr.
-						].
-					].				
-				].
-   ].
-	self put: signaturesCode at: self methodDefinitionsKeyword.
+			                  relatedClasses isNotEmpty ifTrue: [
+					                  stream
+						                  nextPutAll:
+							                  'Here are some information about other methods and classes used by the class under test. Only use them for creating objects, not your own ideas.';
+						                  cr.
+					                  relatedClasses do: [ :cls |
+							                  | classMethods instanceMethods |
+							                  classMethods := cls classSide methods.
+							                  instanceMethods := cls methods.
+							                  (classMethods isEmpty and: [ instanceMethods isEmpty ]) ifFalse: [
+									                  classMethods isEmpty ifFalse: [
+											                  stream
+												                  nextPutAll: '=== methods in ';
+												                  nextPutAll: cls name;
+												                  nextPutAll: ' class';
+												                  cr.
+											                  classMethods do: [ :m |
+													                  stream
+														                  nextPutAll: cls name , ' class>>';
+														                  nextPutAll: m ast selectorAndArgumentNames;
+														                  cr ] ].
+									                  instanceMethods isEmpty ifFalse: [
+											                  stream
+												                  nextPutAll: '=== methods in ';
+												                  nextPutAll: cls name;
+												                  cr.
+											                  instanceMethods do: [ :m |
+													                  stream
+														                  nextPutAll: cls name , '>>';
+														                  nextPutAll: m ast selectorAndArgumentNames;
+														                  cr ] ] ] ] ] ].
+	self put: signaturesCode at: self methodDefinitionsKeyword
 ]
 
 { #category : 'actions' }
 LePromptBuilder >> buildPolymorphismRelations [
+
 	| definedClasses polymorphismRelations |
-	definedClasses := targetClass package definedClasses.
+	definedClasses := targetClass package definedClasses select: [ :cls |
+		                  cls isMeta not and: [ cls superclass notNil and: [ cls superclass ~= Object ] ] ].
+
 	polymorphismRelations := String streamContents: [ :stream |
 			                         definedClasses isNotEmpty ifTrue: [
 					                         stream
 						                         nextPutAll:
 							                         'Use the following polymorphic relationships of classes present in the project. Use them for instantiation when necessary. Do not mock classes if an instantiation of a sub-class is applicable.';
-						                         cr ].
-			                         definedClasses do: [ :cls |
-					                         | abstractMethods relationKind |
-					                         (cls respondsTo: #superClass) ifTrue: [
-							                         abstractMethods := cls methods collect: #isAbstract.
+						                         cr.
+					                         definedClasses do: [ :cls |
+							                         | abstractMethods relationKind |
+							                         abstractMethods := cls methods select: [ :m | m isAbstract ].
 							                         relationKind := abstractMethods isEmpty
-								                                         ifTrue: [ 'a sub-class of' ]
-								                                         ifFalse: [ 'an abstract sub-class of' ].
+								                                         ifTrue: [ ' is a sub-class of ' ]
+								                                         ifFalse: [ ' is an abstract sub-class of ' ].
 							                         stream
-								                         nextPutAll: cls className;
+								                         nextPutAll: cls name;
 								                         nextPutAll: relationKind;
-								                         nextPutAll: cls superClass className;
+								                         nextPutAll: cls superclass name;
 								                         cr ] ] ].
-
-
-
+					
 	self put: polymorphismRelations at: self polymorphismKeyword
 ]
 
 { #category : 'actions' }
 LePromptBuilder >> buildSampleTest [
+
 	| sampleTest |
 	sampleTest := String streamContents: [ :stream |
-			stream nextPutAll:'testPop
+			              stream nextPutAll: self testSampleTemplate ].
 
-	| aStack res elem |
-	elem := ''anElement''.
-	aStack := Stack new.
-	self assertEmpty: aStack.
-
-	aStack push: ''a''.
-	aStack push: elem.
-	res := aStack pop.
-	self assert: res equals: elem.
-	self assert: res identicalTo: elem.
-
-	self assert: aStack size equals: 1.
-	aStack pop.
-	self assertEmpty: aStack'
-			
-		].
-		
-	self put: sampleTest at: self testSampleKeyword.
+	self put: sampleTest at: self testSampleKeyword
 ]
 
 { #category : 'accessing' }
@@ -177,9 +190,10 @@ LePromptBuilder >> content [
 
 	| result |
 	result := self class classPromptTemplate copy.
-
-	values keysAndValuesDo: [ :key :value | result := result copyReplaceAll: key with: (value ifNil: [ '' ]) asString ].
-
+	
+	values keysAndValuesDo: [ :key :value |
+			result := result copyReplaceAll: key with: (value ifNil: [ '' ]) asString
+			 ].
 	^ result
 ]
 
@@ -189,6 +203,18 @@ LePromptBuilder >> initialize [
 	super initialize.
 	values := Dictionary new.
 	maxRelatedClasses := 100
+]
+
+{ #category : 'accessing' }
+LePromptBuilder >> maxRelatedClasses [
+
+	^ maxRelatedClasses
+]
+
+{ #category : 'accessing' }
+LePromptBuilder >> maxRelatedClasses: anObject [
+
+	maxRelatedClasses := anObject
 ]
 
 { #category : 'accessing' }
@@ -237,34 +263,74 @@ LePromptBuilder >> testSampleKeyword [
 ]
 
 { #category : 'actions' }
+LePromptBuilder >> testSampleTemplate [
+
+	^ '"VERSION:1.0"!
+TestCase subclass: #LLMGeneratedStackTest
+	instanceVariableNames: ''''
+	classVariableNames: ''''
+	package: ''Collections-Stack-Tests-Base''!
+!StackTest methodsFor: ''tests''!
+testPush
+	| aStack |
+	aStack := Stack new.
+	aStack push: ''a''.
+	self assert: aStack size equals: 1.
+	aStack push: ''b''.
+	self assert: aStack size equals: 2! !
+!StackTest methodsFor: ''tests''!
+testPop
+	| aStack |
+	aStack := Stack new.
+	aStack push: ''a''.
+	aStack push: ''b''.
+	self assert: aStack pop equals: ''b''.
+	self assert: aStack size equals: 1! !
+!StackTest methodsFor: ''tests''!
+testEmptyError
+	| aStack |
+	aStack := Stack new.
+	self should: [ aStack top ] raise: Error.
+	self should: [ aStack pop ] raise: Error! !
+!StackTest methodsFor: ''tests''!
+testTop
+	| aStack |
+	aStack := Stack new.
+	aStack push: ''a''.
+	aStack push: ''b''.
+	self assert: aStack top equals: ''b''.
+	self assert: aStack size equals: 2! !'
+]
+
+{ #category : 'actions' }
 LePromptBuilder >> topRelatedClassesFromArguments [
 
 	| definedClasses counters |
-	relatedClasses ifNotNil: [ ^ relatedClasses ].
+	relatedClasses ifNotNil: [ ^ relatedClasses ]. "Solo clases reales, sin metaclasses ni clases de test"
+	definedClasses := targetClass package definedClasses select: [ :cls | cls isMeta not and: [ (cls inheritsFrom: TestCase) not ] ].
 
-	definedClasses := targetClass package definedClasses.
 	counters := Dictionary new.
-
 	definedClasses do: [ :cls | counters at: cls put: 0 ].
 
 	targetClass methods do: [ :method |
 			| argNames |
-			argNames := method ast arguments collect: [ :arg | arg name ].
-
+			"Incluir args Y temporaries"
+			argNames := method ast arguments , method ast temporaries collect: [ :arg | arg name ].
 			method ast nodesDo: [ :node |
 					node isMessage ifTrue: [
-							| receiverName selector |
 							node receiver isVariable ifTrue: [
+									| receiverName |
 									receiverName := node receiver name.
 									(argNames includes: receiverName) ifTrue: [
+											| selector |
 											selector := node selector.
-
-											definedClasses do: [ :cls | (cls canUnderstand: selector) ifTrue: [ counters at: cls put: (counters at: cls) + 1 ] ] ] ] ] ] ].
+											definedClasses do: [ :cls |
+													((cls canUnderstand: selector) or: [ cls classSide canUnderstand: selector ]) ifTrue: [
+														counters at: cls put: (counters at: cls) + 1 ] ] ] ] ] ] ].
 
 	relatedClasses := (counters associations asSortedCollection: [ :a :b | a value > b value ]) first:
 		                  (maxRelatedClasses min: counters size).
-
-	^ relatedClasses collect:#key
+	^ relatedClasses collect: #key
 ]
 
 { #category : 'accessing' }

@@ -21,3 +21,22 @@ LeRunner >> coverageFor: targetClass using: aTestCaseClass [
 	result notCoveredNodes: (coverage uncoveredNodes collect:#printString).
 	^ result
 ]
+
+{ #category : 'coverage' }
+LeRunner >> mutationFor: targetClass using: aTestCaseClass [
+
+	| analysis mutationResult result |
+	analysis := MTAnalysis new.
+	analysis classesToMutate: { targetClass }.
+	analysis testClasses: { aTestCaseClass }.
+
+	analysis run.
+	mutationResult := analysis generalResult.
+	result := LeMutationResult new.
+	result mutationScore: mutationResult mutationScore.
+	result allMutants: ((mutationResult particularResults collect:#mutant) collect:#printString).
+	result aliveMutants: ((mutationResult aliveMutants collect:#mutant) collect:#printString).
+	result terminatedMutants: ((mutationResult terminatedMutants collect:#mutant) collect:#printString).
+	result killedMutants: ((mutationResult aliveMutants collect:#mutant) collect:#printString).
+	^ result
+]
