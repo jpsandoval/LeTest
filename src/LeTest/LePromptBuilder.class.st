@@ -94,7 +94,8 @@ LePromptBuilder >> buildFor: aClass [
 	self buildCodeUnderTest.
 	self buildMethodSignatures.
 	self buildPolymorphismRelations.
-	self buildSampleTest
+	self buildSampleTest.
+	 
 ]
 
 { #category : 'actions' }
@@ -203,6 +204,15 @@ LePromptBuilder >> initialize [
 	super initialize.
 	values := Dictionary new.
 	maxRelatedClasses := 100
+]
+
+{ #category : 'actions' }
+LePromptBuilder >> leResult [	
+	|result|
+	result := LePromptResult new.
+	result values: values.
+	result prompt: self content.
+	^ result.
 ]
 
 { #category : 'accessing' }
