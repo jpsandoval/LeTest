@@ -16,10 +16,8 @@ Class {
 { #category : 'accessing' }
 LeCoverageResult >> asJSON [
 
-	^String streamContents: [ :stream |
-		(NeoJSONWriter on: stream)
-			mapInstVarsFor: self class;
-			nextPut: self ].
+	^ String streamContents: [ :stream |
+			  self printJSONOn: stream ]
 ]
 
 { #category : 'accessing' }
@@ -80,4 +78,12 @@ LeCoverageResult >> notCoveredNodes [
 LeCoverageResult >> notCoveredNodes: anObject [
 
 	notCoveredNodes := anObject
+]
+
+{ #category : 'accessing' }
+LeCoverageResult >> printJSONOn: aStream [
+
+			  (NeoJSONWriter on: aStream)
+				  mapInstVarsFor: self class;
+				  nextPut: self 
 ]

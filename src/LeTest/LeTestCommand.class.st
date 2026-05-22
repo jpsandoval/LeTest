@@ -1,27 +1,135 @@
 Class {
 	#name : 'LeTestCommand',
-	#superclass : 'CommandLineHandler',
+	#superclass : 'ClapPharoApplication',
 	#category : 'LeTest-CommandLine',
 	#package : 'LeTest',
 	#tag : 'CommandLine'
 }
 
-{ #category : 'accessing' }
-LeTestCommand class >> commandName [
-	^'LeTest'
+{ #category : 'command line' }
+LeTestCommand class >> letest [
+	"The usual Hello-World example, demonstrating a Clap command with a couple features."
+
+	<script>
+	<commandline>
+	^ (ClapCommandSpec id: #letest)
+		  description: 'LeTest Command Line';
+		  commandClass: self;
+			addHelp;
+		  addPositional: #arguments spec: [ :positional |
+			  positional
+				  description: 'Arguments for LeTest';
+				  multiple: true ];
+		  yourself
 ]
 
-{ #category : 'accessing' }
-LeTestCommand class >> description [
-	 ^ 'LLM Test Generation and Evaluation Command'
+{ #category : 'execution' }
+LeTestCommand >> execute [
+
+	| args |
+	self prepareImageAndExit.
+	args := self context arguments.
+
+	args second = 'gp' ifTrue: [ self generatePromptForClass: args third ].
+	args second = 'lr' ifTrue: [ self localRunFor: args third ].
+	args second = 'gr' ifTrue: [ self gemeratedRunFor: args third from: args fourth ].
+
+	args second = 'lc' ifTrue: [ self localCoverageFor: args third ].
+	args second = 'gc' ifTrue: [ self gemeratedCoverageFor: args third from: args fourth ].
+
+	args second = 'lm' ifTrue: [ self localMutationFor: args third ].
+	args second = 'gm' ifTrue: [ self gemeratedMutationFor: args third from: args fourth ]
 ]
 
-{ #category : 'activation' }
-LeTestCommand >> activate [
-    | args |
-    args := self commandLine arguments.
+{ #category : 'execution' }
+LeTestCommand >> gemeratedCoverageFor: aClassName from: aStFilePath [
 
-    self stdout nextPutAll: 'Hello ', args first; lf.
+	| generatedTest targetClass result |
+	
+	aStFilePath asFileReference fileIn.
 
-    Smalltalk snapshot: false andQuit: true
+	generatedTest := Smalltalk classNamed: 'LLMGenerated' , aClassName , 'Test'.
+	targetClass := Smalltalk classNamed: aClassName.
+
+	result := LeRunner new coverageFor: targetClass using: generatedTest.
+
+	result printJSONOn: self context stdout
+]
+
+{ #category : 'execution' }
+LeTestCommand >> gemeratedMutationFor: aClassName from: aStFilePath [
+
+	| generatedTest targetClass result |
+	aStFilePath asFileReference fileIn.
+
+	generatedTest := Smalltalk classNamed: 'LLMGenerated' , aClassName , 'Test'.
+	targetClass := Smalltalk classNamed: aClassName.
+
+	result := LeRunner new mutationFor: targetClass using: generatedTest.
+
+	result printJSONOn: self context stdout
+]
+
+{ #category : 'execution' }
+LeTestCommand >> gemeratedRunFor: aClassName from: aStFilePath [
+
+	| generatedTest targetClass result |
+	aStFilePath asFileReference fileIn.
+
+	generatedTest := Smalltalk classNamed: 'LLMGenerated' , aClassName , 'Test'.
+	targetClass := Smalltalk classNamed: aClassName.
+
+	result := generatedTest buildSuite run.
+	result printOn: self context stdout.
+	self context stdout cr.
+	result errors printOn: self context stdout.
+	self context stdout cr.	
+]
+
+{ #category : 'execution' }
+LeTestCommand >> generatePromptForClass: aClassName [
+
+	| cls builder |
+	cls := Smalltalk classNamed: aClassName.
+	builder := LePromptBuilder new.
+	builder buildFor: cls.
+	builder leResult printJSONOn: self context stdout.
+]
+
+{ #category : 'execution' }
+LeTestCommand >> localCoverageFor: aClassName [
+
+	|generatedTest targetClass result |
+	
+	generatedTest := Smalltalk classNamed: aClassName , 'Test'.
+	targetClass := Smalltalk classNamed: aClassName.
+
+	result := LeRunner new coverageFor: targetClass using: generatedTest.
+
+	result printJSONOn: self context stdout
+]
+
+{ #category : 'execution' }
+LeTestCommand >> localMutationFor: aClassName [
+
+	| generatedTest targetClass result |
+	generatedTest := Smalltalk classNamed: aClassName , 'Test'.
+	targetClass := Smalltalk classNamed: aClassName.
+
+	result := LeRunner new mutationFor: targetClass using: generatedTest.
+
+	result printJSONOn: self context stdout
+]
+
+{ #category : 'execution' }
+LeTestCommand >> localRunFor: aClassName [
+
+	|result generatedTest |
+	generatedTest := Smalltalk classNamed: aClassName , 'Test'.
+
+	result := generatedTest buildSuite run.
+	result printOn: self context stdout.
+	self context stdout cr.
+	result errors printOn: self context stdout.
+	self context stdout cr.	
 ]

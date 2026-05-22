@@ -40,10 +40,7 @@ LeMutationResult >> allMutants: anObject [
 { #category : 'converting' }
 LeMutationResult >> asJSON [
 
-	^ String streamContents: [ :stream |
-			  (NeoJSONWriter on: stream)
-				  mapInstVarsFor: self class;
-				  nextPut: self ]
+	^ String streamContents: [ :stream | self printJSONOn: stream].
 ]
 
 { #category : 'accessing' }
@@ -68,6 +65,14 @@ LeMutationResult >> mutationScore [
 LeMutationResult >> mutationScore: anObject [
 
 	mutationScore := anObject
+]
+
+{ #category : 'converting' }
+LeMutationResult >> printJSONOn: aStream [
+	^ 
+			  (NeoJSONWriter on: aStream)
+				  mapInstVarsFor: self class;
+				  nextPut: self
 ]
 
 { #category : 'accessing' }

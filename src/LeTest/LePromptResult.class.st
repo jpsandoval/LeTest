@@ -14,9 +14,15 @@ Class {
 LePromptResult >> asJSON [
 
 	^ String streamContents: [ :stream |
-			  (NeoJSONWriter on: stream)
+			  self printJSONOn: stream]
+]
+
+{ #category : 'accessing' }
+LePromptResult >> printJSONOn: aStream [
+
+	^ (NeoJSONWriter on: aStream)
 				  mapInstVarsFor: self class;
-				  nextPut: self ]
+				  nextPut: self.
 ]
 
 { #category : 'accessing' }
