@@ -67,6 +67,12 @@ LePromptBuilder class >> testSampleKeyword [
 ]
 
 { #category : 'actions' }
+LePromptBuilder >> buildClassName [
+
+	self put: (targetClass name) at: self classNameKeyword
+]
+
+{ #category : 'actions' }
 LePromptBuilder >> buildCodeUnderTest [
 
 	| codeUnderTestString |
@@ -91,11 +97,11 @@ LePromptBuilder >> buildFor: aClass [
 
 	targetClass := aClass.
 	relatedClasses := nil. "cleaning cache"
+	self buildClassName.
 	self buildCodeUnderTest.
 	self buildMethodSignatures.
 	self buildPolymorphismRelations.
-	self buildSampleTest.
-	 
+	self buildSampleTest
 ]
 
 { #category : 'actions' }
@@ -178,7 +184,8 @@ LePromptBuilder >> buildSampleTest [
 
 { #category : 'accessing' }
 LePromptBuilder >> classNameKeyword [
-	self class classNameKeyword.
+
+	^self class classNameKeyword
 ]
 
 { #category : 'accessing' }
