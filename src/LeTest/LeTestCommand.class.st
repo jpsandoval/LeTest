@@ -24,6 +24,36 @@ LeTestCommand class >> letest [
 ]
 
 { #category : 'execution' }
+LeTestCommand >> bothCoverageFor: aClassName from: aStFilePath [
+
+	| generatedTest targetClass result manualTest|
+	aStFilePath asFileReference fileIn.
+
+	generatedTest := Smalltalk classNamed: 'LLMGenerated' , aClassName , 'Test'.
+	manualTest := Smalltalk classNamed: aClassName , 'Test'.
+	targetClass := Smalltalk classNamed: aClassName.
+
+	result := LeRunner new coverageFor: targetClass using: { manualTest . generatedTest }.
+
+	result printJSONOn: self context stdout
+]
+
+{ #category : 'execution' }
+LeTestCommand >> bothMutationFor: aClassName from: aStFilePath [
+
+	| generatedTest targetClass result manualTest |
+	aStFilePath asFileReference fileIn.
+
+	generatedTest := Smalltalk classNamed: 'LLMGenerated' , aClassName , 'Test'.
+	manualTest := Smalltalk classNamed: aClassName , 'Test'.
+	targetClass := Smalltalk classNamed: aClassName.
+
+	result := LeRunner new mutationFor: targetClass using: { manualTest . generatedTest }.
+
+	result printJSONOn: self context stdout
+]
+
+{ #category : 'execution' }
 LeTestCommand >> execute [
 
 	| args |
@@ -38,20 +68,22 @@ LeTestCommand >> execute [
 	args second = 'gc' ifTrue: [ self gemeratedCoverageFor: args third from: args fourth ].
 
 	args second = 'lm' ifTrue: [ self localMutationFor: args third ].
-	args second = 'gm' ifTrue: [ self gemeratedMutationFor: args third from: args fourth ]
+	args second = 'gm' ifTrue: [ self gemeratedMutationFor: args third from: args fourth ].
+
+	args second = 'bm' ifTrue: [ self bothMutationFor: args third from: args fourth ].
+	args second = 'bc' ifTrue: [ self bothCoverageFor: args third from: args fourth ].
 ]
 
 { #category : 'execution' }
 LeTestCommand >> gemeratedCoverageFor: aClassName from: aStFilePath [
 
 	| generatedTest targetClass result |
-	
 	aStFilePath asFileReference fileIn.
 
 	generatedTest := Smalltalk classNamed: 'LLMGenerated' , aClassName , 'Test'.
 	targetClass := Smalltalk classNamed: aClassName.
 
-	result := LeRunner new coverageFor: targetClass using: generatedTest.
+	result := LeRunner new coverageFor: targetClass using: {generatedTest}.
 
 	result printJSONOn: self context stdout
 ]
@@ -65,7 +97,7 @@ LeTestCommand >> gemeratedMutationFor: aClassName from: aStFilePath [
 	generatedTest := Smalltalk classNamed: 'LLMGenerated' , aClassName , 'Test'.
 	targetClass := Smalltalk classNamed: aClassName.
 
-	result := LeRunner new mutationFor: targetClass using: generatedTest.
+	result := LeRunner new mutationFor: targetClass using: {generatedTest}.
 
 	result printJSONOn: self context stdout
 ]
@@ -99,12 +131,11 @@ LeTestCommand >> generatePromptForClass: aClassName [
 { #category : 'execution' }
 LeTestCommand >> localCoverageFor: aClassName [
 
-	|generatedTest targetClass result |
-	
+	| generatedTest targetClass result |
 	generatedTest := Smalltalk classNamed: aClassName , 'Test'.
 	targetClass := Smalltalk classNamed: aClassName.
 
-	result := LeRunner new coverageFor: targetClass using: generatedTest.
+	result := LeRunner new coverageFor: targetClass using: {generatedTest}.
 
 	result printJSONOn: self context stdout
 ]
@@ -116,7 +147,7 @@ LeTestCommand >> localMutationFor: aClassName [
 	generatedTest := Smalltalk classNamed: aClassName , 'Test'.
 	targetClass := Smalltalk classNamed: aClassName.
 
-	result := LeRunner new mutationFor: targetClass using: generatedTest.
+	result := LeRunner new mutationFor: targetClass using: {generatedTest}.
 
 	result printJSONOn: self context stdout
 ]
