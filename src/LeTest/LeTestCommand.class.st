@@ -48,7 +48,9 @@ LeTestCommand >> bothMutationFor: aClassName from: aStFilePath [
 	manualTest := Smalltalk classNamed: aClassName , 'Test'.
 	targetClass := Smalltalk classNamed: aClassName.
 
-	result := LeRunner new mutationFor: targetClass using: { manualTest . generatedTest }.
+	result := LeRunner new mutationFor: targetClass using: {
+			          manualTest.
+			          generatedTest } with: self context stdout.
 
 	result printJSONOn: self context stdout
 ]
@@ -97,7 +99,7 @@ LeTestCommand >> gemeratedMutationFor: aClassName from: aStFilePath [
 	generatedTest := Smalltalk classNamed: 'LLMGenerated' , aClassName , 'Test'.
 	targetClass := Smalltalk classNamed: aClassName.
 
-	result := LeRunner new mutationFor: targetClass using: {generatedTest}.
+	result := LeRunner new mutationFor: targetClass using: { generatedTest } with: self context stdout.
 
 	result printJSONOn: self context stdout
 ]
@@ -147,7 +149,7 @@ LeTestCommand >> localMutationFor: aClassName [
 	generatedTest := Smalltalk classNamed: aClassName , 'Test'.
 	targetClass := Smalltalk classNamed: aClassName.
 
-	result := LeRunner new mutationFor: targetClass using: {generatedTest}.
+	result := LeRunner new mutationFor: targetClass using: { generatedTest } with: self context stdout.
 
 	result printJSONOn: self context stdout
 ]

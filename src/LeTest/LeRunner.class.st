@@ -42,3 +42,24 @@ LeRunner >> mutationFor: targetClass using: aTestCaseClasses [
 	result killedMutants: ((mutationResult aliveMutants collect: #mutant) collect: #printString).
 	^ result
 ]
+
+{ #category : 'coverage' }
+LeRunner >> mutationFor: targetClass using: aTestCaseClasses with: aStream [
+
+	| analysis mutationResult result |
+	analysis := MTAnalysis new.
+	analysis classesToMutate: { targetClass }.
+	analysis testClasses: aTestCaseClasses.
+	"analysis logger: (LeLogger new
+			 stream: aStream;
+			 yourself)."
+	analysis run.
+	mutationResult := analysis generalResult.
+	result := LeMutationResult new.
+	result mutationScore: mutationResult mutationScore.
+	result allMutants: ((mutationResult particularResults collect: #mutant) collect: #printString).
+	result aliveMutants: ((mutationResult aliveMutants collect: #mutant) collect: #printString).
+	result terminatedMutants: ((mutationResult terminatedMutants collect: #mutant) collect: #printString).
+	result killedMutants: ((mutationResult aliveMutants collect: #mutant) collect: #printString).
+	^ result
+]
