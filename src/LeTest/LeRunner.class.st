@@ -50,6 +50,7 @@ LeRunner >> mutationFor: targetClass using: aTestCaseClasses with: aStream [
 	analysis := MTAnalysis new.
 	analysis classesToMutate: { targetClass }.
 	analysis testClasses: aTestCaseClasses.
+	analysis budget:(MTTimeBudget for: 120 seconds).
 	"analysis logger: (LeLogger new
 			 stream: aStream;
 			 yourself)."
