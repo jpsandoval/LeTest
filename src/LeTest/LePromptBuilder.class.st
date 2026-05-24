@@ -25,7 +25,7 @@ Do not use setUp and tearDown methods.
 Make tests as atomic as possible.
 All tests should be for SUnit.
 In case of mocking, use SUnit-MockObjects. But, do not use mocking for all tests.
-Name all methods according to the template - [MethodUnderTest][Scenario]Test, and use only English letters.
+Name all methods according to the template - test[MethodUnderTest][Scenario], and use only English letters.
 The source code of class under test is as follows:
 $CODE
 $METHODS
