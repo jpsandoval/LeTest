@@ -50,10 +50,10 @@ LeRunner >> mutationFor: targetClass using: aTestCaseClasses with: aStream [
 	analysis := MTAnalysis new.
 	analysis classesToMutate: { targetClass }.
 	analysis testClasses: aTestCaseClasses.
-	analysis budget:(MTTimeBudget for: 120 seconds).
-	"analysis logger: (LeLogger new
+	analysis budget: (MTFixedNumberOfMutantsBudget for: 100). "analysis logger: (LeLogger new
 			 stream: aStream;
 			 yourself)."
+	analysis operators.
 	analysis run.
 	mutationResult := analysis generalResult.
 	result := LeMutationResult new.
@@ -61,6 +61,6 @@ LeRunner >> mutationFor: targetClass using: aTestCaseClasses with: aStream [
 	result allMutants: ((mutationResult particularResults collect: #mutant) collect: #printString).
 	result aliveMutants: ((mutationResult aliveMutants collect: #mutant) collect: #printString).
 	result terminatedMutants: ((mutationResult terminatedMutants collect: #mutant) collect: #printString).
-	result killedMutants: ((mutationResult aliveMutants collect: #mutant) collect: #printString).
+	result killedMutants: ((mutationResult killedMutants collect: #mutant) collect: #printString).
 	^ result
 ]
