@@ -39,7 +39,7 @@ LeRunner >> mutationFor: targetClass using: aTestCaseClasses [
 	result allMutants: ((mutationResult particularResults collect: #mutant) collect: #printString).
 	result aliveMutants: ((mutationResult aliveMutants collect: #mutant) collect: #printString).
 	result terminatedMutants: ((mutationResult terminatedMutants collect: #mutant) collect: #printString).
-	result killedMutants: ((mutationResult aliveMutants collect: #mutant) collect: #printString).
+	result killedMutants: ((mutationResult killedMutants collect: #mutant) collect: #printString).
 	^ result
 ]
 
